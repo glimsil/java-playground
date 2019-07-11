@@ -67,7 +67,7 @@ public abstract class QueueListener<T, Y> {
                 }
             }
         };
-        channel.exchangeDeclare(exchange, "topic");
+        channel.exchangeDeclare(exchange, "direct");
         channel.queueDeclare(queueName, true, false, false, deadletterConf(queueName));
         channel.queueDeclare(deadLetterQueue, true, false, false, lazyConf(queueName));
         channel.queueBind(queueName, exchange, routingKey);
