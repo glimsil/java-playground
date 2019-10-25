@@ -1,8 +1,10 @@
-#flyway with multiple db#
-This is a simple POC of db migration with flyway with multiple databases (in this case 2).
+# Flyway with multiple Databases #
+
+This is a simple POC of DB migration with flyway with multiple databases (in this case 2).
 
 ### Setup ###
-You can configure your the databases connection info (host, user, pass, etc..) on build gradle (tasks migrateDatabase1 and migrateDatabase2).
+You can configure your the databases connection info (host, user, pass, etc.) on build gradle (tasks migrateDatabase1 and migrateDatabase2).
+
 To test this as is, you can run it starting two docker instances with postgres:
 
 ```
