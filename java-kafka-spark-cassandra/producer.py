@@ -22,18 +22,9 @@ for file_name in os.listdir("data"):
     jsons.append(f.read())
     f.close()
 
-#while i != 1000:
-#    producer.send('messages', "{\"id\": 1, \"a\": 1,\"b\": 1, \"operator\":\"+\"}")
-#    producer.send('messages', "{\"id\": 1, \"a\": 1,\"b\": 1, \"operator\":\"+\"}")
-#    producer.send('messages', "{\"id\": 1, \"a\": 1,\"b\": 1, \"operator\":\"+\"}")
-#    producer.send('messages', "{\"id\": 1, \"a\": 1,\"b\": 1, \"operator\":\"+\"}")
-#    producer.send('messages', "{\"id\": 1, \"a\": 1,\"b\": 1, \"operator\":\"+\"}")
-#    producer.send('messages', "{\"id\": 2, \"a\": 1,\"b\": 2, \"operator\":\"+\"}")
-#    producer.send('messages', "{\"id\": 2, \"a\": 1,\"b\": 2, \"operator\":\"-\"}")
-#    producer.send('messages', "{\"id\": 2, \"a\": 1,\"b\": 2, \"operator\":\"-\"}")
-#    producer.send('messages', "{\"id\": 2, \"a\": 1,\"b\": 2, \"operator\":\"-\"}")
-#    i+=1
-#    print('sent')
+while i != 1000:
+    for json in jsons:
+        producer.send('messages', json)
+    i+=1
+    print('sent')
 
-#1 = 5000
-#2 = 12000
