@@ -1,0 +1,11 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+	implementation group: 'io.netty', name: 'netty-all', version: '4.1.44.Final'
+}
