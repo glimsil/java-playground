@@ -1,0 +1,3 @@
+include 'gatling'
+rootProject.name = 'gatling-stress-test'
+
