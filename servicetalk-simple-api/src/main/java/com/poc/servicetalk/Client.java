@@ -10,7 +10,7 @@ public final class Client {
     public static void main(String[] args) throws Exception {
         try (HttpClient client = HttpClients.forSingleAddress("localhost", 8080).build()) {
             CountDownLatch responseProcessedLatch = new CountDownLatch(1);
-            client.request(client.get("/sayHello"))
+            client.request(client.get("/hello/world"))
                     .whenFinally(responseProcessedLatch::countDown)
                     .subscribe(resp -> {
                         System.out.println(resp.toString((name, value) -> value));
