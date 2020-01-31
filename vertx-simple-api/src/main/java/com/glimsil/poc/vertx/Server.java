@@ -24,19 +24,20 @@ public class Server extends AbstractVerticle {
 		Router router = Router.router(vertx);
 
 		router.route().handler(BodyHandler.create());
-		router.get("/message/:message").handler(this::handleMessage);
+		router.post("/json/message").handler(this::handleMessage);
 		router.get("/hello/world").handler(this::handleHelloWorld);
 
 		vertx.createHttpServer().requestHandler(router).listen(8080);
 	}
 
 	private void handleMessage(RoutingContext routingContext) {
-		String message = routingContext.request().getParam("message");
+		JsonObject body = routingContext.getBodyAsJson();
+		Message bodyMessage = body.mapTo(Message.class);
 		HttpServerResponse response = routingContext.response();
-		if (message == null) {
+		if (bodyMessage == null) {
 			sendError(400, response);
 		} else {
-			JsonObject messageJson = JsonObject.mapFrom(Service.handleMessage(message));
+			JsonObject messageJson = JsonObject.mapFrom(Service.handleMessage(bodyMessage.getMessage()));
 			if (messageJson == null) {
 				sendError(404, response);
 			} else {

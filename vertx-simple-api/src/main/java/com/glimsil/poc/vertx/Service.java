@@ -8,7 +8,7 @@ public class Service {
 
 	public static Message handleMessage(String message) {
 		Message msg = new Message();
-		msg.setMessage(message);
+		msg.setMessage("Response: " + message);
 		return msg;
 	}
 
