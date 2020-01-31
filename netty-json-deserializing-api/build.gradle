@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+	implementation group: 'io.netty', name: 'netty-all', version: '4.1.44.Final'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+}
