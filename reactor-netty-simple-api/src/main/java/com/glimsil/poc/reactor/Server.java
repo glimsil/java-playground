@@ -7,7 +7,7 @@ import reactor.netty.DisposableServer;
 import reactor.netty.http.server.HttpServer;
 
 public class Server {
-
+	// FIXME NettyOutbound#sendObject not working
 	public static void main(String[] args) {
 		DisposableServer server =
 				HttpServer.create()
