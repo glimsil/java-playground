@@ -1,5 +1,7 @@
 package com.glimsil.poc.netty;
 
+import com.glimsil.poc.netty.db.dao.MessageDao;
+
 public class Service {
 	
 	public static String getResult() {
@@ -10,5 +12,9 @@ public class Service {
 		Message msg = new Message();
 		msg.setMessage("Response: " + message);
 		return msg;
+	}
+	
+	public static com.glimsil.poc.netty.db.entity.Message findMessage(String message) {
+		return MessageDao.findByMessage(message);
 	}
 }

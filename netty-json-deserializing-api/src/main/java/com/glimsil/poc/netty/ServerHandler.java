@@ -45,7 +45,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
-        } else if("/json/message".equals(uri.getPath()) && req.method() == HttpMethod.POST) {
+        } else if ("/json/message".equals(uri.getPath()) && req.method() == HttpMethod.POST) {
             if (HttpUtil.is100ContinueExpected(req)) {
                 ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
             }
@@ -58,6 +58,15 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
+        } else if (uri.getPath().startsWith("/json/message/") && req.method() == HttpMethod.GET) {
+        	if (HttpUtil.is100ContinueExpected(req)) {
+                ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
+            }
+        	String message = uri.getPath().substring("/json/message/".length());
+        	FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(objectMapper.writeValueAsString(Service.findMessage(message)).getBytes()));
+        	response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
+        	response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+        	ctx.write(response).addListener(ChannelFutureListener.CLOSE);
         }
     }
 
