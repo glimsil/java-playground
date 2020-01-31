@@ -16,7 +16,9 @@ public class Server {
 										(request, response) -> response.sendString(Mono.just(Service.getHelloWorld())))
 								.post("/json/message", (request, response) -> response.sendObject(request.receive()
 										.map(byteBuf -> byteBuf.toString(Charset.forName("UTF-8")))
-										.map(Service::handleMessage))))
+										.map(Service::handleMessage)))
+								.get("/json/message/{message}", (request, response) -> response.sendObject(
+										Mono.fromCallable(() -> Service.findMessage(request.param("message"))))))
 						.host("localhost")
 						.port(8080)
 						.bindNow();
