@@ -22,7 +22,8 @@ repositories {
 }
 
 dependencies {
-    compile "io.projectreactor.netty:reactor-netty:0.9.4.RELEASE"
+    implementation "io.projectreactor.netty:reactor-netty:0.9.4.RELEASE"
+    implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: '1.1.4.RELEASE'
 }
 
 run {

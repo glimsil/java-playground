@@ -8,5 +8,6 @@ repositories {
 
 dependencies {
 	implementation group: 'io.netty', name: 'netty-all', version: '4.1.44.Final'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: '1.1.4.RELEASE'
 }
