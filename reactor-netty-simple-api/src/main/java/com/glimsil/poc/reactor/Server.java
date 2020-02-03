@@ -21,9 +21,8 @@ public class Server {
 						.get("/hello/world", (request, response) -> response.sendString(Mono.just(Service.getHelloWorld())))
 						.post("/json/message", (request, response) -> response.send(request
 								.receive()
-								.retain()
 								.aggregate()
-								.map(byteBuf -> byteBuf.toString(Charset.forName("UTF-8")))
+								.map(byteBuf -> byteBuf.toString(CHARSET))
 								.map(Service::handleMessage)
 								.map(Server::fromObject)))
 						.get("/json/message/{message}", (request, response) -> response.send(
