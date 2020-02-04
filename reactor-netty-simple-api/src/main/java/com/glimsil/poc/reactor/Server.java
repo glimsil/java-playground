@@ -18,7 +18,7 @@ public class Server {
 	public static void main(String[] args) {
 		DisposableServer server = HttpServer.create()
 				.route(routes -> routes
-						.get("/hello/world", (request, response) -> response.sendString(Mono.just(Service.getHelloWorld())))
+						.get("/hello/world", (request, response) -> response.sendString(Mono.fromCallable(Service::getHelloWorld)))
 						.post("/json/message", (request, response) -> response.send(request
 								.receive()
 								.aggregate()
