@@ -55,7 +55,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
             String json = new String(bytes);
             Message message = objectMapper.readValue(json, Message.class);
             FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(objectMapper.writeValueAsString(Service.handleMessage(message.getMessage())).getBytes()));
-            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
         } else if (uri.getPath().startsWith("/json/message/") && req.method() == HttpMethod.GET) {
