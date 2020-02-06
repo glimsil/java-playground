@@ -27,7 +27,9 @@ public class Server {
 								.map(Server::fromObject)))
 						.get("/json/message/{message}", (request, response) -> response.send(
 								Mono.fromCallable(() -> Service.findMessage(request.param("message")))
-								.map(Server::fromObject))))
+								.map(Server::fromObject)))
+						.get("/lettuce/{key}", (request, response) -> response.sendString(
+								Service.getFromCache(request.param("key")))))
 				.host("localhost")
 				.port(8080)
 				.bindNow();

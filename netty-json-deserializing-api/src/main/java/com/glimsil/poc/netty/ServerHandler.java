@@ -67,6 +67,41 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
         	response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
         	response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         	ctx.write(response).addListener(ChannelFutureListener.CLOSE);
+        } else if (uri.getPath().startsWith("/lettuce/") && req.method() == HttpMethod.GET) {
+        	if (HttpUtil.is100ContinueExpected(req)) {
+                ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
+            }
+        	String key = uri.getPath().substring("/lettuce/".length());
+        	
+        	/*
+        	 * REACTIVE
+        	 * 
+				Service.getFromCache(key).subscribe(value -> {
+				FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(value.getBytes()));
+				response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+				response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+				ctx.writeAndFlush(response);
+				ctx.close();
+			});*/
+        	
+        	/*
+        	 * ASYNC
+        	 * 
+				Service.getFromCache(key).thenAccept(value -> {
+        		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(value.getBytes()));
+				response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+				response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+				ctx.writeAndFlush(response);
+				ctx.close();
+        	});*/
+        	
+        	/*
+        	 * SYNC
+        	 */
+        	FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(Service.getFromCache(key).getBytes()));
+			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+			response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+			ctx.write(response).addListener(ChannelFutureListener.CLOSE);
         }
     }
 
