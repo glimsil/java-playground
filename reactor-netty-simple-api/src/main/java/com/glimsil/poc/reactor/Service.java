@@ -1,6 +1,9 @@
 package com.glimsil.poc.reactor;
 
+import com.glimsil.poc.reactor.cache.Cache;
 import com.glimsil.poc.reactor.db.dao.MessageDao;
+
+import reactor.core.publisher.Mono;
 
 public class Service {
 	
@@ -16,6 +19,10 @@ public class Service {
 	
 	public static com.glimsil.poc.reactor.db.entity.Message findMessage(String message) {
 		return MessageDao.findByMessage(message);
+	}
+	
+	public static Mono<String> getFromCache(String key) {
+		return Cache.get(key);
 	}
 
 }
