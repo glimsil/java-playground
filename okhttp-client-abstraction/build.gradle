@@ -7,6 +7,7 @@ repositories {
 }
 
 dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.28'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
     compile group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.3.1'
 }

@@ -1,19 +1,26 @@
 package com.glimsil.poc.okhttp.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glimsil.poc.okhttp.exception.BodyParsingException;
 import com.glimsil.poc.okhttp.exception.FallbackMethodFailedException;
 import com.glimsil.poc.okhttp.exception.RetriesExceededException;
 import okhttp3.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 public abstract class RestClient {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private OkHttpClient client = new OkHttpClient();
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().
+            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     public class RetryPolicy {
         private int attempts = 1;
@@ -95,55 +102,48 @@ public abstract class RestClient {
             return this;
         }
 
-        /*
-            Requires retry = true
-         */
         public RestRequest fallback(Callable<Object> fallback) {
             this.fallback = fallback;
             return this;
         }
 
-        public <T> T get(Class<T> valueType) throws IOException {
-            if (retry) {
-                return objectMapper.readValue(retry(() -> client.newCall(requestBuilder.get().build()).execute()).string(), valueType);
-            }
-            return objectMapper.readValue(client.newCall(requestBuilder.get().build()).execute().body().string(), valueType);
+        public <T> Optional<T> get(Class<T> valueType) {
+            Request request = requestBuilder.get().build();
+            ResponseBody responseBody = execute(() -> client.newCall(request).execute(), retry ? retryPolicy : null);
+            return parseBody(responseBody, valueType);
         }
 
-        public <T> T post(Object object, Class<T> valueType) throws IOException {
+        public <T> Optional<T> post(Object object, Class<T> valueType) {
             RequestBody requestBody = buildRequestBody(object);
-            if (retry) {
-                return objectMapper.readValue(retry(() -> client.newCall(requestBuilder.post(requestBody).build()).execute()).string(), valueType);
-            }
-            return objectMapper.readValue(client.newCall(requestBuilder.post(requestBody).build()).execute().body().string(), valueType);
+            ResponseBody responseBody = execute(() -> client.newCall(requestBuilder.post(requestBody).build()).execute(), retry ? retryPolicy : null);
+            return parseBody(responseBody, valueType);
         }
 
-        public <T> T put(Object object, Class<T> valueType) throws IOException {
+        public <T> Optional<T> put(Object object, Class<T> valueType) {
             RequestBody requestBody = buildRequestBody(object);
-            if (retry) {
-                return objectMapper.readValue(retry(() -> client.newCall(requestBuilder.put(requestBody).build()).execute()).string(), valueType);
-            }
-            return objectMapper.readValue(client.newCall(requestBuilder.put(requestBody).build()).execute().body().string(), valueType);
+            ResponseBody responseBody = execute(() -> client.newCall(requestBuilder.put(requestBody).build()).execute(), retry ? retryPolicy : null);
+            return parseBody(responseBody, valueType);
         }
 
-        public <T> T delete(Class<T> valueType) throws IOException {
-            if (retry) {
-                return objectMapper.readValue(retry(() -> client.newCall(requestBuilder.delete().build()).execute()).string(), valueType);
-            }
-            return objectMapper.readValue(client.newCall(requestBuilder.delete().build()).execute().body().string(), valueType);
+        public <T> Optional<T> delete(Class<T> valueType) {
+            Request request = requestBuilder.delete().build();
+            ResponseBody responseBody = execute(() -> client.newCall(request).execute(), retry ? retryPolicy : null);
+            return parseBody(responseBody, valueType);
         }
 
-        private ResponseBody retry(Callable<Response> method) {
+        private ResponseBody execute(Callable<Response> method, RetryPolicy retryPolicy) {
             Response response;
-            for (int i = 0; i < retryPolicy.getAttempts(); i++) {
+            for (int i = 0; i < (null == retryPolicy ? 1 : retryPolicy.getAttempts()); i++) {
                 try {
+                    if(i > 0) {
+                        Thread.sleep(retryPolicy.getDelay() + (retryPolicy.getDelayIncrement() * i-1));
+                    }
                     response = method.call();
-                    if (!retryPolicy.getStatusCodeList().contains(response.code())) {
+                    if (null == retryPolicy || !retryPolicy.getStatusCodeList().contains(response.code())) {
                         return response.body();
                     }
-                    Thread.sleep(retryPolicy.getDelay() + (retryPolicy.getDelayIncrement() * i));
                 } catch (Exception e) {
-                    System.out.println("Error on calling method.");
+                    logger.error("Error on calling method.", e);
                 }
             }
             if(null == fallback) {
@@ -152,9 +152,22 @@ public abstract class RestClient {
                 try {
                     return buildResponseBody(fallback.call());
                 } catch (Exception e) {
-                    throw new FallbackMethodFailedException("Fallback method failed.");
+                    throw new FallbackMethodFailedException("Fallback method failed.", e);
                 }
             }
+        }
+
+        private <T> Optional<T> parseBody(ResponseBody responseBody, Class<T> valueType) {
+            Optional<T> body = Optional.empty();
+            try {
+                if(null != responseBody) {
+                    body = Optional.of(objectMapper.readValue(responseBody.string(), valueType));
+                }
+            } catch (IOException e) {
+                logger.error("Error trying to parse body.", e);
+                throw new BodyParsingException("Error trying to parse body.", e);
+            }
+            return body;
         }
 
         private RequestBody buildRequestBody(Object object) {
@@ -162,17 +175,20 @@ public abstract class RestClient {
                 return RequestBody.create(objectMapper.writeValueAsString(object),
                         MediaType.parse("application/json; charset=utf-8"));
             } catch (JsonProcessingException e) {
-                System.out.println(e.getMessage());
+                logger.error("Error on building request body: " + e.getMessage(), e);
             }
-            return null;
+            return RequestBody.create(null);
         }
 
         private ResponseBody buildResponseBody(Object object) {
             try {
+                if(object instanceof Optional) {
+                    object = ((Optional) object).get();
+                }
                 return ResponseBody.create(objectMapper.writeValueAsString(object),
                         MediaType.parse("application/json; charset=utf-8"));
             } catch (JsonProcessingException e) {
-                System.out.println(e.getMessage());
+                logger.error("Error on building response body: " + e.getMessage(), e);
             }
             return null;
         }
@@ -187,7 +203,7 @@ public abstract class RestClient {
         return new RestRequest(uri);
     }
 
-    private RetryPolicy retryPolicy() {
+    protected RetryPolicy retryPolicy() {
         return new RetryPolicy()
                 .handle(404)
                 .attempts(3)
