@@ -1,0 +1,18 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.28'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+
+    //Elasticsearch
+    compile group: 'org.elasticsearch', name: 'elasticsearch', version: '7.6.0'
+    compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.6.0'
+    compile 'org.elasticsearch.client:elasticsearch-rest-client:7.6.0'
+
+}
