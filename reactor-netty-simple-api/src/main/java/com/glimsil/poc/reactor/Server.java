@@ -1,7 +1,11 @@
 package com.glimsil.poc.reactor;
 
 import java.nio.charset.Charset;
+import java.util.concurrent.CountDownLatch;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+import com.glimsil.poc.reactor.service.MessageService;
 import com.google.gson.Gson;
 
 import io.netty.buffer.ByteBuf;
@@ -16,24 +20,35 @@ public class Server {
 	private static final Charset CHARSET = Charset.forName("UTF-8");
 	
 	public static void main(String[] args) {
-		DisposableServer server = HttpServer.create()
+		final AnnotationConfigApplicationContext appCtxt = new AnnotationConfigApplicationContext("com.glimsil.poc.reactor");
+		final MessageService svc = appCtxt.getBean(MessageService.class);
+		final DisposableServer server = HttpServer.create()
 				.route(routes -> routes
-						.get("/hello/world", (request, response) -> response.sendString(Mono.fromCallable(Service::getHelloWorld)))
+						.get("/hello/world", (request, response) -> response.sendString(Mono.fromCallable(svc::getHelloWorld)))
 						.post("/json/message", (request, response) -> response.send(request
 								.receive()
 								.aggregate()
 								.map(byteBuf -> byteBuf.toString(CHARSET))
-								.map(Service::handleMessage)
+								.map(svc::handleMessage)
 								.map(Server::fromObject)))
 						.get("/json/message/{message}", (request, response) -> response.send(
-								Mono.fromCallable(() -> Service.findMessage(request.param("message")))
+								Mono.fromCallable(() -> svc.findMessage(request.param("message")))
 								.map(Server::fromObject)))
 						.get("/lettuce/{key}", (request, response) -> response.sendString(
-								Service.getFromCache(request.param("key")))))
+								svc.getFromCache(request.param("key")))))
 				.host("localhost")
 				.port(8080)
 				.bindNow();
-		server.onDispose().block();
+		final CountDownLatch cdl = new CountDownLatch(1);
+		server.onDispose(() -> {
+			appCtxt.close();
+			cdl.countDown();
+		});
+		try {
+			cdl.await();
+		} catch (final InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private static ByteBuf fromObject(Object obj) {

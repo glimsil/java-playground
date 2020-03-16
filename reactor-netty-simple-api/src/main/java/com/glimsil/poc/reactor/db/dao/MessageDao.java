@@ -3,16 +3,18 @@ package com.glimsil.poc.reactor.db.dao;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.stereotype.Component;
 
 import com.glimsil.poc.reactor.db.entity.Message;
 
+@Component
 public class MessageDao {
 	
-	private static final JdbcTemplate jdbcTemplate;
-	private static final RowMapper<Message> mapper;
+	private final JdbcTemplate jdbcTemplate;
+	private final RowMapper<Message> mapper;
 	
-	static {
-		DriverManagerDataSource dataSource = new DriverManagerDataSource();
+	public MessageDao() {
+		final DriverManagerDataSource dataSource = new DriverManagerDataSource();
 		dataSource.setDriverClassName("org.postgresql.Driver");
 		dataSource.setUrl("jdbc:postgresql:benchmark");
 		dataSource.setUsername("postgres");
@@ -21,7 +23,7 @@ public class MessageDao {
 		mapper = (rs, rowNum) -> new Message(rs.getInt("id"), rs.getString("message"));
 	}
 	
-	public static Message findByMessage(String message) {
+	public Message findByMessage(String message) {
 		return jdbcTemplate.queryForObject("SELECT * FROM message m WHERE m.message = ?", mapper, message);
 	}
 	
