@@ -1,9 +1,99 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url "${artifactory_contextUrl}/plugins-release.maven.global"
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+        }
+    }
+    dependencies {
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.11.0"
+        classpath "com.tr.bluemoon.triggr:triggr-project-plugin:3.+"
+    }
+}
+
 plugins {
     id 'java-library'
 }
+apply plugin: 'application'
+apply plugin: 'java'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'triggr-project'
+
+configurations {
+    published
+    all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+    all*. exclude group: 'com.wordnik'
+}
 
 repositories {
+    mavenCentral()
     jcenter()
+    maven {
+        url "${artifactory_contextUrl}/${artifactory_resolve_repoKey_release}"
+        credentials {
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+        }
+    }
+    maven {
+        url "${artifactory_contextUrl}/${artifactory_resolve_repoKey_snapshot}"
+        credentials {
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+        }
+    }
+    maven {
+        url "https://platform-build-01.int.thomsonreuters.com/nexus/repository/public/"
+    }
+}
+
+artifactoryPublish.skip = true
+
+artifactoryPublish {
+    dependsOn sourceJar, javadocJar
+}
+
+artifacts {
+    published sourceJar
+    published javadocJar
+}
+
+artifactory {
+    contextUrl = "${artifactory_contextUrl}"
+    publish {
+        repository {
+            repoKey = version.toString().endsWith('SNAPSHOT') ? "${artifactory_publish_repoKey_snapshot}" : "${artifactory_publish_repoKey_release}"
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+
+        }
+        defaults {
+            publishConfigs('archives', 'published')
+            publishPom = true
+            publishIvy = false
+        }
+    }
+    resolve {
+        repository {
+            repoKey = "${artifactory_resolve_repoKey_release}"
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+            maven = true
+        }
+    }
+    clientConfig.setIncludeEnvVars(true)
+    clientConfig.info.setBuildName("${ciinfo.job.tokenize('/').last()}")
+    clientConfig.info.setBuildNumber(ciinfo.buildNumber)
+    clientConfig.info.setBuildUrl(System.getenv()['BUILD_URL'])
 }
 
 dependencies {
@@ -12,4 +102,11 @@ dependencies {
     implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: '1.1.4.RELEASE'
     implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.9'
     implementation group: 'io.lettuce', name: 'lettuce-core', version: '5.2.1.RELEASE'
+    implementation group: 'org.springframework', name: 'spring-context', version: '5.2.4.RELEASE'
+    
+    // Logging implementation.
+    implementation "org.slf4j:slf4j-api:1.7.28"
+    runtime 'org.slf4j:slf4j-log4j12:1.7.28'
+    runtime 'log4j:log4j:1.2.17'
+    runtime 'com.tr.bluemoon:log4j-jsonevent-layout:1.7-TR'
 }

@@ -103,7 +103,6 @@ artifactory {
     clientConfig.info.setBuildName("${ciinfo.job.tokenize('/').last()}")
     clientConfig.info.setBuildNumber(ciinfo.buildNumber)
     clientConfig.info.setBuildUrl(System.getenv()['BUILD_URL'])
-
 }
 
 dependencies {

@@ -6,7 +6,12 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.net.URI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.glimsil.poc.netty.service.MessageService;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -20,28 +25,37 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpUtil;
 
+@Component
 public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(ServerHandler.class);
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+	private final MessageService svc;
+    private final ObjectMapper mapper;
+    
+    public ServerHandler(final MessageService svc, final ObjectMapper mapper) {
+		this.svc = svc;
+		this.mapper = mapper;
+	}
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(final ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
     }
 
     @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
+    public void channelReadComplete(final ChannelHandlerContext ctx) {
         ctx.flush();
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest req) throws Exception {
-        URI uri = new URI(req.uri());
+    protected void channelRead0(final ChannelHandlerContext ctx, final FullHttpRequest req) throws Exception {
+        final URI uri = new URI(req.uri());
         if("/hello/world".equals(uri.getPath()) && req.method() == HttpMethod.GET) {
             if (HttpUtil.is100ContinueExpected(req)) {
                 ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
             }
-            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(Service.getResult().getBytes()));
+            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(svc.getResult().getBytes()));
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
@@ -53,8 +67,8 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
             byte[] bytes = new byte[byteBuf.readableBytes()];
             byteBuf.readBytes(bytes);
             String json = new String(bytes);
-            Message message = objectMapper.readValue(json, Message.class);
-            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(objectMapper.writeValueAsString(Service.handleMessage(message.getMessage())).getBytes()));
+            Message message = mapper.readValue(json, Message.class);
+            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(mapper.writeValueAsString(svc.handleMessage(message.getMessage())).getBytes()));
             response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
             response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
             ctx.write(response).addListener(ChannelFutureListener.CLOSE);
@@ -63,7 +77,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
                 ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
             }
         	String message = uri.getPath().substring("/json/message/".length());
-        	FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(objectMapper.writeValueAsString(Service.findMessage(message)).getBytes()));
+        	FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(mapper.writeValueAsString(svc.findMessage(message)).getBytes()));
         	response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json");
         	response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
         	ctx.write(response).addListener(ChannelFutureListener.CLOSE);
@@ -76,7 +90,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
         	/*
         	 * REACTIVE
         	 * 
-				Service.getFromCache(key).subscribe(value -> {
+				svc.getFromCache(key).subscribe(value -> {
 				FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(value.getBytes()));
 				response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
 				response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -87,7 +101,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
         	/*
         	 * ASYNC
         	 * 
-				Service.getFromCache(key).thenAccept(value -> {
+				svc.getFromCache(key).thenAccept(value -> {
         		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(value.getBytes()));
 				response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
 				response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -98,7 +112,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
         	/*
         	 * SYNC
         	 */
-        	FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(Service.getFromCache(key).getBytes()));
+        	FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(svc.getFromCache(key).getBytes()));
 			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
 			response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
 			ctx.write(response).addListener(ChannelFutureListener.CLOSE);
@@ -106,8 +120,8 @@ public class ServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> 
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+    public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
+    	LOGGER.error(cause.getMessage(), cause);
         ctx.close();
     }
 
