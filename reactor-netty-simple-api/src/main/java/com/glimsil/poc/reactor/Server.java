@@ -3,6 +3,8 @@ package com.glimsil.poc.reactor;
 import java.nio.charset.Charset;
 import java.util.concurrent.CountDownLatch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.glimsil.poc.reactor.service.MessageService;
@@ -18,6 +20,7 @@ public class Server {
 	
 	private static final Gson GSON = new Gson();
 	private static final Charset CHARSET = Charset.forName("UTF-8");
+	private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
 	
 	public static void main(String[] args) {
 		final AnnotationConfigApplicationContext appCtxt = new AnnotationConfigApplicationContext("com.glimsil.poc.reactor");
@@ -39,15 +42,17 @@ public class Server {
 				.host("localhost")
 				.port(8080)
 				.bindNow();
+		LOGGER.info("Application up");
 		final CountDownLatch cdl = new CountDownLatch(1);
 		server.onDispose(() -> {
 			appCtxt.close();
+			LOGGER.info("Application down");
 			cdl.countDown();
 		});
 		try {
 			cdl.await();
 		} catch (final InterruptedException e) {
-			e.printStackTrace();
+			LOGGER.error(e.getMessage(), e);
 		}
 	}
 	
