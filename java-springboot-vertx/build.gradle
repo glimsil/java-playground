@@ -1,0 +1,40 @@
+plugins {
+    id 'org.springframework.boot' version '2.1.6.RELEASE'
+    id 'java'
+}
+
+apply plugin: 'io.spring.dependency-management'
+
+group = 'br.com.poc'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter"
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.12'
+    compile "io.vertx:vertx-core:3.9.0"
+    compile "io.vertx:vertx-web:3.9.0"
+    compile "io.vertx:vertx-service-proxy:3.9.0"
+    compile "io.vertx:vertx-codegen:3.9.0"
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootRun {
+    systemProperties = System.properties
+}

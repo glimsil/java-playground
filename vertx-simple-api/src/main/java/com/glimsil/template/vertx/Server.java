@@ -1,4 +1,4 @@
-package com.glimsil.poc.vertx;
+package com.glimsil.template.vertx;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
@@ -7,9 +7,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class Server extends AbstractVerticle {
 

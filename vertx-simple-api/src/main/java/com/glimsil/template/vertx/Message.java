@@ -1,4 +1,4 @@
-package com.glimsil.poc.vertx;
+package com.glimsil.template.vertx;
 
 public class Message {
     private String message;

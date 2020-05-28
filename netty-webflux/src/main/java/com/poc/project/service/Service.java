@@ -1,4 +1,6 @@
-package com.glimsil.poc.vertx;
+package com.poc.project.service;
+
+import com.poc.project.dto.Message;
 
 public class Service {
 	
