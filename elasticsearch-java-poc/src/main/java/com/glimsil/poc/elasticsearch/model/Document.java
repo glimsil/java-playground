@@ -19,4 +19,12 @@ public class Document {
     public void setDocumentName(String documentName) {
         this.documentName = documentName;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "\"documentLink\": \"" + documentLink + "\"" +
+                ", \"documentName\": \"" + documentName + "\"" +
+                '}';
+    }
 }

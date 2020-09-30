@@ -74,7 +74,7 @@ public class ElasticSearchClientProvider {
     public List<Document> phraseFullTextSearch(String phrase, String... index) {
         // Will query by prefixes of the text. Separators, like space - , . special characters count like a new start.
         // so if i want to query c2-ab of a phrase aaac2-ab it will not work
-        MultiMatchQueryBuilder multiMatchQueryBuilder = new MultiMatchQueryBuilder(phrase, "documentName", "documentLink").type(MultiMatchQueryBuilder.Type.BEST_FIELDS);
+        MultiMatchQueryBuilder multiMatchQueryBuilder = new MultiMatchQueryBuilder(phrase, "documentName", "documentLink").type(MultiMatchQueryBuilder.Type.PHRASE_PREFIX);
         return executeSearch(multiMatchQueryBuilder, index);
     }
 

@@ -6,6 +6,14 @@ repositories {
     jcenter()
 }
 
+apply plugin: 'application'
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+mainClassName = 'com.glimsil.poc.elasticsearch.Main'
+
 dependencies {
     compile 'org.slf4j:slf4j-api:1.7.28'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
@@ -15,4 +23,8 @@ dependencies {
     compile 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.6.0'
     compile 'org.elasticsearch.client:elasticsearch-rest-client:7.6.0'
 
+}
+
+run {
+    systemProperties System.getProperties()
 }
